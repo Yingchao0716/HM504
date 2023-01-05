@@ -1,0 +1,37 @@
+from math import exp
+from math import sqrt
+import numpy as np
+import timeit
+
+def priceEuropeanPut(s0,dt,K,r,sig,N):
+	
+	u = exp(sig * sqrt(dt))
+	d = exp(-sig * sqrt(dt))
+	discount = exp(-r * dt)
+	p = discount * (exp(r * dt) - d) / (u - d)
+	q = discount * (1-p)
+	
+	payoff = lambda x: max(K - x,0)
+	
+	if N == 0:
+		return payoff(s0), 1
+	
+	vup,_ = priceEuropeanPut(u * s0,dt,K,r,sig,N-1)
+	vdown,_ = priceEuropeanPut(d * s0,dt,K,r,sig,N-1)
+	
+	return p * vup + q * vdown, (vup - vdown) / (u * s0 - d * s0)
+		
+if __name__ == "__main__":
+
+	with open('input.txt','r') as f:
+		params = [float(n) for n in f.read().split(',')]
+		params[-1] = int(params[-1])
+		
+	S,T,K,r,sig,N = tuple(params)	
+	price,allocation = priceEuropeanPut(S,T,K,r,sig,N)
+	
+	print "\nResults: "
+	print "V0 = ", price, ", delta0 = ", allocation
+	
+	with open('output.txt','w') as f:
+		f.write(str(price) + ',' + str(allocation))		
